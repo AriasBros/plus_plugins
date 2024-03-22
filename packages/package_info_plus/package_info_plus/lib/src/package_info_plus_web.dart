@@ -49,7 +49,7 @@ class PackageInfoPlusWebPlugin extends PackageInfoPlatform {
   }
 
   @override
-  Future<PackageInfoData> getAll() async {
+  Future<PackageInfoData> getAll({Uri? customVersionJson}) async {
     final cacheBuster = DateTime.now().millisecondsSinceEpoch;
     final url = versionJsonUrl(assetManager.baseUrl, cacheBuster);
     final response = _client == null ? await get(url) : await _client.get(url);

@@ -33,12 +33,16 @@ class PackageInfo {
 
   /// Retrieves package information from the platform.
   /// The result is cached.
-  static Future<PackageInfo> fromPlatform() async {
+  ///
+  /// Optionally, a custom version JSON URI can be provided for web.
+  static Future<PackageInfo> fromPlatform([Uri? customVersionJson]) async {
     if (_fromPlatform != null) {
       return _fromPlatform!;
     }
 
-    final platformData = await PackageInfoPlatform.instance.getAll();
+    final platformData = await PackageInfoPlatform.instance.getAll(
+      customVersionJson: customVersionJson,
+    );
     _fromPlatform = PackageInfo(
       appName: platformData.appName,
       packageName: platformData.packageName,
