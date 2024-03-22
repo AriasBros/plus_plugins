@@ -59,14 +59,19 @@ class PackageInfoPlusWebPlugin extends PackageInfoPlatform {
       url = customVersionJson;
     } else {
       // otherwise, try to get it from the AssetManager base URL
-      url = versionJsonUrl(assetManager.baseUrl, cacheBuster);
+      // TODO: baseUrl is empty when running example app in debug, so handle that somehow
+      final baseUrl = assetManager.baseUrl;
+      print('AssetManager base URL: $baseUrl');
+      url = versionJsonUrl(baseUrl, cacheBuster);
     }
+    print('Loading version.json from: $url');
     var response = await _get(url);
     var versionMap = _getVersionMap(response);
 
     // If obtaining the version.json failed,
     // try to get it from the Browser window URL
     if (versionMap.isEmpty) {
+      print('failed to load version.json from AssetManager, trying window URL');
       url = versionJsonUrl(web.window.document.baseURI, cacheBuster);
       response = await _get(url);
       versionMap = _getVersionMap(response);
