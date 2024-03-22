@@ -5,6 +5,7 @@ import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:http/http.dart';
 import 'package:package_info_plus_platform_interface/package_info_data.dart';
 import 'package:package_info_plus_platform_interface/package_info_platform_interface.dart';
+import 'package:web/web.dart' as web;
 
 /// The web implementation of [PackageInfoPlatform].
 ///
@@ -51,9 +52,25 @@ class PackageInfoPlusWebPlugin extends PackageInfoPlatform {
   @override
   Future<PackageInfoData> getAll({Uri? customVersionJson}) async {
     final cacheBuster = DateTime.now().millisecondsSinceEpoch;
-    final url = versionJsonUrl(assetManager.baseUrl, cacheBuster);
-    final response = _client == null ? await get(url) : await _client.get(url);
-    final versionMap = _getVersionMap(response);
+
+    late Uri url;
+    // If user provides a custom version.json, use it
+    if (customVersionJson != null) {
+      url = customVersionJson;
+    } else {
+      // otherwise, try to get it from the AssetManager base URL
+      url = versionJsonUrl(assetManager.baseUrl, cacheBuster);
+    }
+    var response = await _get(url);
+    var versionMap = _getVersionMap(response);
+
+    // If obtaining the version.json failed,
+    // try to get it from the Browser window URL
+    if (versionMap.isEmpty) {
+      url = versionJsonUrl(web.window.document.baseURI, cacheBuster);
+      response = await _get(url);
+      versionMap = _getVersionMap(response);
+    }
 
     return PackageInfoData(
       appName: versionMap['app_name'] ?? '',
@@ -64,6 +81,9 @@ class PackageInfoPlusWebPlugin extends PackageInfoPlatform {
       buildSignature: '',
     );
   }
+
+  Future<Response> _get(Uri url) async =>
+      _client == null ? await get(url) : await _client.get(url);
 
   Map<String, dynamic> _getVersionMap(Response response) {
     if (response.statusCode == 200) {
